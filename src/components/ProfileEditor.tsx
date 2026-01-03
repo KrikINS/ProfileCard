@@ -49,11 +49,6 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, setProfil
         }));
     };
 
-    const updateLanguage = (index: number, value: string) => {
-        const newLangs = [...profile.languages];
-        newLangs[index] = value;
-        setProfile(prev => ({ ...prev, languages: newLangs }));
-    };
 
     return (
         <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-md mx-auto h-fit">
@@ -77,51 +72,68 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, setProfil
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Name</label>
-                        <input type="text" name="name" value={profile.name} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                        <input type="text" name="name" value={profile.name} onChange={handleChange} placeholder="Full Name" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Role</label>
-                        <input type="text" name="role" value={profile.role} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                        <input type="text" name="role" value={profile.role} onChange={handleChange} placeholder="Job Title" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Age</label>
-                        <input type="number" name="age" value={profile.age} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                        <input type="number" name="age" value={profile.age} onChange={handleChange} placeholder="25" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Nationality</label>
-                        <input type="text" name="nationality" value={profile.nationality} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                        <input type="text" name="nationality" value={profile.nationality} onChange={handleChange} placeholder="Nationality" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
                     </div>
                 </div>
 
                 {/* ID Number */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700">ID Number</label>
-                    <input type="text" name="idNumber" value={profile.idNumber} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <input type="text" name="idNumber" value={profile.idNumber} onChange={handleChange} placeholder="ID Number" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
                 </div>
 
                 {/* Event Name */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Event Name</label>
-                    <input type="text" name="eventName" value={profile.eventName} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <input type="text" name="eventName" value={profile.eventName} onChange={handleChange} placeholder="Event Name" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
                 </div>
 
                 {/* Languages */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Languages</label>
-                    <div className="flex gap-2">
-                        {profile.languages.map((lang, idx) => (
-                            <input
-                                key={idx}
-                                value={lang}
-                                onChange={(e) => updateLanguage(idx, e.target.value)}
-                                className="block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                            />
-                        ))}
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="block text-sm font-medium text-gray-700">Languages</label>
+                        <button onClick={() => setProfile(prev => ({ ...prev, languages: [...prev.languages, ""] }))} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">Add</button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Currently fixed to 2 languages</p>
+                    <div className="space-y-2">
+                        {profile.languages.map((lang, idx) => (
+                            <div key={idx} className="flex gap-2 items-center">
+                                <input
+                                    value={lang}
+                                    onChange={(e) => {
+                                        const newLangs = [...profile.languages];
+                                        newLangs[idx] = e.target.value;
+                                        setProfile(prev => ({ ...prev, languages: newLangs }));
+                                    }}
+                                    placeholder="Language (e.g. English Fluent)"
+                                    className="w-full border border-gray-300 rounded-md shadow-sm p-2"
+                                />
+                                <button
+                                    onClick={() => setProfile(prev => ({ ...prev, languages: prev.languages.filter((_, i) => i !== idx) }))}
+                                    className="text-red-500 hover:text-red-700"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        ))}
+                        {profile.languages.length === 0 && (
+                            <p className="text-sm text-gray-400 italic">No languages added.</p>
+                        )}
+                    </div>
                 </div>
 
                 {/* Experience */}
@@ -150,6 +162,45 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, setProfil
                         ))}
                     </div>
                 </div>
+
+                <hr className="my-4 border-gray-200" />
+
+                {/* Private Information */}
+                <div>
+                    <h3 className="text-xs font-bold uppercase text-gray-400 mb-3 block">Private Information (Not shown on card)</h3>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                            <input type="email" name="email" value={profile.email || ''} onChange={handleChange} placeholder="example@company.com" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
+                            <input type="tel" name="mobile" value={profile.mobile || ''} onChange={handleChange} placeholder="+123 456 7890" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                        </div>
+                    </div>
+                </div>
+
+                <hr className="my-4 border-gray-200" />
+
+                {/* Theme Selector */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Card Theme</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {['modern', 'midnight', 'emerald', 'crimson'].map((theme) => (
+                            <button
+                                key={theme}
+                                onClick={() => setProfile(prev => ({ ...prev, theme: theme as any }))}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize border transition-all ${profile.theme === theme
+                                        ? 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-300'
+                                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                                    }`}
+                            >
+                                {theme}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
             </div>
         </div>
     );

@@ -14,4 +14,7 @@ export interface Profile {
     experience: Experience[];
     idNumber: string;
     eventName: string;
+    email?: string;
+    mobile?: string;
+    theme: 'modern' | 'midnight' | 'emerald' | 'crimson';
 }
