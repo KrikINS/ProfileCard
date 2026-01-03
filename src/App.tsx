@@ -1,12 +1,16 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import { ProfileCard } from './components/ProfileCard';
 import { ProfileEditor } from './components/ProfileEditor';
 import type { Profile } from './types';
 import './index.css';
+import { supabase } from './lib/supabase';
 
 function App() {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
+
   const [profile, setProfile] = useState<Profile>({
     name: "Rawan Mamdouh Attia",
     role: "Staff Member",
@@ -23,6 +27,97 @@ function App() {
     idNumber: "0024938472910",
     eventName: "Saudi Media Forum"
   });
+
+  // Load profile from URL if ID is present
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (id) {
+      loadProfile(id);
+    }
+  }, []);
+
+  const loadProfile = async (id: string) => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('employee_profiles')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error loading profile:', error);
+      alert('Failed to load profile');
+    } else if (data) {
+      setProfile({
+        name: data.name,
+        role: data.role,
+        imageUrl: data.image_url || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop",
+        age: data.age,
+        nationality: data.nationality,
+        languages: data.languages || [],
+        experience: data.experience || [],
+        idNumber: data.id_number,
+        eventName: data.event_name
+      });
+      setProfileId(id);
+    }
+    setLoading(false);
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+
+    // Convert current state to DB format
+    const payload = {
+      name: profile.name,
+      role: profile.role,
+      age: profile.age,
+      nationality: profile.nationality,
+      id_number: profile.idNumber,
+      event_name: profile.eventName,
+      languages: profile.languages,
+      experience: profile.experience,
+      image_url: profile.imageUrl
+    };
+
+    let result;
+    if (profileId) {
+      // Update existing
+      result = await supabase
+        .from('employee_profiles')
+        .update(payload)
+        .eq('id', profileId)
+        .select()
+        .single();
+    } else {
+      // Create new
+      result = await supabase
+        .from('employee_profiles')
+        .insert([payload])
+        .select()
+        .single();
+    }
+
+    const { data, error } = result;
+
+    if (error) {
+      console.error('Error saving profile:', error);
+      alert('Failed to save profile');
+    } else if (data) {
+      setProfileId(data.id);
+      // Update URL without reload
+      const newUrl = `${window.location.pathname}?id=${data.id}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+      alert('Profile saved! URL updated.');
+    }
+    setLoading(false);
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert('Link copied to clipboard!');
+  };
 
   const handleDownload = useCallback(async () => {
     if (cardRef.current === null) {
@@ -48,11 +143,33 @@ function App() {
         {/* Editor Section */}
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-2xl text-white shadow-lg mb-6">
-            <h1 className="text-3xl font-bold">Profile Generator</h1>
-            <p className="opacity-90">Create stunning employee identification cards.</p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold">Profile Generator</h1>
+                <p className="opacity-90">Create & Share employee cards.</p>
+              </div>
+              {loading && <div className="text-sm bg-white/20 px-3 py-1 rounded-full animate-pulse">Saving...</div>}
+            </div>
           </div>
 
           <ProfileEditor profile={profile} setProfile={setProfile} />
+
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="bg-green-600 text-white py-4 rounded-xl font-bold uppercase tracking-wider shadow-lg hover:bg-green-700 transition-all"
+            >
+              {profileId ? 'Update Profile' : 'Save Profile'}
+            </button>
+
+            <button
+              onClick={handleCopyLink}
+              className="bg-gray-800 text-white py-4 rounded-xl font-bold uppercase tracking-wider shadow-lg hover:bg-gray-900 transition-all"
+            >
+              Copy Link
+            </button>
+          </div>
 
           <button
             onClick={handleDownload}
